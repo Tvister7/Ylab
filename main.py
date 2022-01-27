@@ -1,10 +1,12 @@
-from typing import List, Tuple
+from numbers import Number
+from typing import List, Tuple, Optional
 from random import randint as rand
 from itertools import permutations
 from math import factorial
 
 
-example = [(0, 1), (1, 4), (4, 1), (5, 5), (7, 2)]
+example = [(0, 2), (2, 5), (5, 2), (6, 6), (8, 3)]
+example2 = [(0, 1), (1, 4), (4, 1), (5, 5), (7, 2)]
 
 
 # функция для генерации произвольного набора точек
@@ -18,8 +20,17 @@ def gen_rand_dot_arr(number: int) -> List[Tuple]:
     return dot_arr
 
 
-def get_distance(dot1: Tuple, dot2: Tuple) -> float:
-    return ((dot1[0] - dot2[0]) ** 2 + (dot1[1] - dot2[1]) ** 2) ** 0.5
+def get_distance(dot1: Tuple, dot2: Tuple) -> Optional[float]:
+    try:
+        if isinstance(dot1[0], Number) and isinstance(dot1[1], Number) \
+                and isinstance(dot2[0], Number) and isinstance(dot2[1], Number):
+
+            return ((dot1[0] - dot2[0]) ** 2 + (dot1[1] - dot2[1]) ** 2) ** 0.5
+    except IndexError:
+        return None
+    except TypeError:
+        return None
+    return None
 
 
 def get_route_length(sequence: Tuple, matrix: List[List]) -> float:
@@ -63,7 +74,7 @@ def beautiful_output(matrix: List[List], dots: List[Tuple], route: Tuple, best_l
 
 
 # получение матрицы расстояний
-def get_all_distances(dots: List[Tuple]) -> List[List]:
+def get_all_distances(dots: List[Tuple]) -> Optional[List[List]]:
     matrix = []
     for _ in range(len(dots)):
         matrix.append([0 for _ in range(len(dots))])
@@ -74,15 +85,25 @@ def get_all_distances(dots: List[Tuple]) -> List[List]:
         for j in range(i + 1, len(dots)):
             dot2 = dots[j]
             matrix[i][j] = get_distance(dot1, dot2)
+            if not isinstance(matrix[i][j], Number):
+                return None
             matrix[j][i] = matrix[i][j]
     return matrix
 
 
 def get_best_route(dots: List[Tuple]):
+    if not dots or not hasattr(dots, '__iter__') or not hasattr(dots, "__getitem__"):
+        return "Неверный формат данных"
     matrix = get_all_distances(dots)
+    if not matrix:
+        return "Неверный формат данных"
+
     # Для произвольных путей, без фиксированных начальной и конечной точкек
     # routes = get_permutations(len(dots))
+
+    # Для набора с фиксированной точкой
     routes = get_permutations(len(dots), fixed=True)
+
     best_length = float('inf')
     best_route = tuple()
     for route in routes:
@@ -90,11 +111,15 @@ def get_best_route(dots: List[Tuple]):
         if current_length < best_length:
             best_length = current_length
             best_route = route
+
+    if best_length == 0:
+        return "Неверный формат данных"
     return beautiful_output(matrix, dots, best_route, best_length)
 
 
-print(get_best_route(example))
-# проверка для произвольного набора точек
-# rand_dots = gen_rand_dot_arr(10)
-# print(rand_dots)
-# print(get_best_route(rand_dots))
+if __name__ == "__main__":
+    print(get_best_route(example))
+    # проверка для произвольного набора точек
+    # rand_dots = gen_rand_dot_arr(10)
+    # print(f"Рандомный набор точек {rand_dots}")
+    # print(get_best_route(rand_dots))
